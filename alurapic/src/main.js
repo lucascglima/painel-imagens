@@ -6,6 +6,9 @@ import VueResource from 'vue-resource';
 import VueRouter from 'vue-router';
 import { routes } from './routes';
 
+// importando Diretiva
+import './directives/Transform'
+
 // registrando o view resource
 Vue.use(VueResource);
 // registrando o view router
