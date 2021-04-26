@@ -2,32 +2,36 @@
 
   <div>
     <h1 class="centralizado">Cadastro</h1>
-    <h2 class="centralizado"> {{ foto.titulo}} </h2>
+    <h2 class="centralizado">{{ foto.titulo }}</h2>
 
+    <h2 v-if="foto._id" class="centralizado">Alterando</h2>
+    <h2 v-else class="centralizado">Incluindo</h2>
+    
     <form @submit.prevent="grava()">
+
       <div class="controle">
         <label for="titulo">TÍTULO</label>
-        <input id="titulo" autocomplete="off" 
-            v-model.lazy="foto.titulo">
+        <input data-vv-as="título" name="titulo" v-validate data-vv-rules="required|min:3|max:30" id="titulo" autocomplete="off" v-model="foto.titulo">
+        <span class="erro" v-show="errors.has('titulo')">{{ errors.first('titulo') }}</span>
       </div>
 
       <div class="controle">
         <label for="url">URL</label>
-        <input id="url" autocomplete="off" 
-            v-model.lazy="foto.url">
-        <imagem-responsiva v-show="foto.url" :url="foto.url" :titulo="foto.titulo" />
+        <input name="url" v-validate data-vv-rules="required" id="url" autocomplete="off" v-model="foto.url">
+        <span class="erro" v-show="errors.has('url')">{{ errors.first('url') }}</span>
+        <imagem-responsiva v-show="foto.url" :url="foto.url" :titulo="foto.titulo"/>
+         
       </div>
 
       <div class="controle">
         <label for="descricao">DESCRIÇÃO</label>
-            <textarea id="descricao" autocomplete="off" 
-               v-model="foto.descricao">
-            </textarea>
+        <textarea id="descricao" autocomplete="off" v-model="foto.descricao">
+        </textarea>
       </div>
 
       <div class="centralizado">
-        <meu-botao rotulo="GRAVAR" tipo="submit" class="botao-padrao"/>
-        <router-link to="/"><meu-botao rotulo="VOLTAR" tipo="button" class="botao-padrao"/></router-link>
+        <meu-botao rotulo="GRAVAR" tipo="submit"/>
+        <router-link :to="{ name: 'home'}"><meu-botao rotulo="VOLTAR" tipo="button"/></router-link>
       </div>
 
     </form>
@@ -38,6 +42,8 @@
 
 import ImagemResponsiva from '../shared/imagem-responsiva/ImagemResponsiva.vue'
 import Botao from '../shared/botao/Botao.vue';
+import Foto from '../../domain/foto/Foto';
+import FotoService from '../../domain/foto/FotoService';
 
 export default {
 
@@ -46,28 +52,45 @@ export default {
     'imagem-responsiva': ImagemResponsiva, 
     'meu-botao': Botao
   },
-  data (){
 
-      return{
+  data() {
 
-          foto: {
-              titulo: '',
-              url:'',
-              descricao:'',
-          }
+      return {
+
+          foto: new Foto(),
+          id: this.$route.params.id
       }
   },
+
   methods: {
+
       grava() {
 
-        console.log('enviar dados para API');
+         this.$validator
+          .validateAll()
+          .then(success => {
 
-        console.log(this.foto);
-        this.foto = {
-            titulo: '',
-            url: '',
-            descricao:'',
-        }
+            if(success) {
+
+              this.service
+                .cadastra(this.foto)
+                .then(() => {
+                  if(this.id) this.$router.push({ name: 'home' });
+                  this.foto = new Foto();
+                }, err => console.log(err));
+            }
+          });
+      }
+  },
+
+  created() {
+
+      this.service = new FotoService(this.$resource);
+
+      if(this.id) {
+        this.service
+          .busca(this.id)
+          .then(foto => this.foto = foto);
       }
   }
 }
@@ -81,7 +104,6 @@ export default {
   .controle {
     font-size: 1.2em;
     margin-bottom: 20px;
-  
 
   }
   .controle label {
@@ -92,11 +114,14 @@ export default {
  .controle label + input, .controle textarea {
     width: 100%;
     font-size: inherit;
-    border-radius: 5px;
+    border-radius: 5px
   }
 
   .centralizado {
     text-align: center;
   }
 
+  .erro {
+    color: red;
+  } 
 </style>

@@ -1,111 +1,119 @@
-
 <template>
-
-<div>
+  <div>
     <h1 class="centralizado">{{ titulo }}</h1>
 
-      <input type="search" class="filtro" @input="filtro = $event.target.value" placeholder="filtre pelo título da foto">
+    <p v-show="mensagem" class="centralizado">{{ mensagem }}</p>
 
-      <ul class="lista-fotos">
-        <li class="lista-fotos-item" v-for="foto in fotosComFiltro">
+    <input type="search" class="filtro" @input="filtro = $event.target.value" placeholder="filtre por parte do título">
 
-          <meu-painel :titulo="foto.titulo"> 
-            <imagem-responsiva :url="foto.url" :titulo="foto.titulo" v-meu-transform:scale.animate="1.2"/>
-            <meu-botao 
-                rotulo="Remover" 
-                tipo="button" 
-                @botaoAtivado="remove(foto)"
-                :confirmacao= "true"
-                estilo="perigo"
-            />
-          </meu-painel>
+    <ul class="lista-fotos">
+      <li class="lista-fotos-item" v-for="foto of fotosComFiltro">
+
+        <meu-painel :titulo="foto.titulo">
           
-        </li>
-      </ul>
+          <imagem-responsiva v-meu-transform:scale.animate="1.2" :url="foto.url" :titulo="foto.titulo"/>
+          <router-link :to="{ name : 'altera', params: { id: foto._id} }">
+            <meu-botao tipo="button" rotulo="ALTERAR"/>
+          </router-link>
+          <meu-botao 
+            tipo="button" 
+            rotulo="REMOVER" 
+            @botaoAtivado="remove(foto)"
+            :confirmacao="true"
+            estilo="perigo"/>
+          
+        </meu-painel>
 
-
+      </li>
+    </ul>
   </div>
-
 </template>
 
 <script>
 import Painel from '../shared/painel/Painel.vue';
 import ImagemResponsiva from '../shared/imagem-responsiva/ImagemResponsiva.vue';
-import Botao from '../shared/botao/Botao.vue'
+import Botao from '../shared/botao/Botao.vue';
+import FotoService from '../../domain/foto/FotoService';
 
 export default {
 
   components: {
-    'meu-painel': Painel,
+    'meu-painel' : Painel, 
     'imagem-responsiva': ImagemResponsiva,
-    'meu-botao': Botao,
-
+    'meu-botao' : Botao
   },
 
   data() {
+
     return {
-      titulo: 'Painel de Imagens',
-      fotos: [],
+
+      titulo: 'Painel de Imagens', 
+      fotos: [], 
       filtro: '',
+      mensagem: ''
     }
   },
 
   computed: {
 
-    // Criando ele utiliza o filtro das fotos
     fotosComFiltro() {
-      // criando uma expressão com o valor do filtro, insensitivo
+
       if(this.filtro) {
-        let exp = new RegExp (this.filtro.trim(),'i');
+        let exp = new RegExp(this.filtro.trim(), 'i');
         return this.fotos.filter(foto => exp.test(foto.titulo));
-      }
-       // se o campo estiver vazio, não filtramos, retornamos a lista
-      else {
+      } else {
         return this.fotos;
       }
-
     }
   },
 
   methods: {
 
-      remove (foto){
-            alert ('Remover a foto!' + foto.titulo)
-          
-      }
+    remove(foto) { 
+       
+      this.service.apaga(foto._id)
+        .then(()=> {
+          let indice = this.fotos.indexOf(foto);
+          this.fotos.splice(indice, 1);
+          this.mensagem = 'Foto removida com sucesso';
+        }, err => {
+          this.mensagem = err.message;
+        });
+    }
+
   },
-  
-  // Função fazendo o get da API, converte a função res para JSON, feito isto a função fotos pega o Lista de fotos da função data() e retorna as fotos da API
+
   created() {
-      this.$http.get('http://localhost:3000/v1/fotos')
-      .then (res => res.json())
-      .then( fotos => this.fotos = fotos, err => console.log(err));
-      }
+
+    this.service = new FotoService(this.$resource);
+
+    this.service
+      .lista()
+      .then(fotos => this.fotos = fotos, err => this.mensagem = err.message);
   }
+}
 
 </script>
 
 <style>
+
   .centralizado {
+
     text-align: center;
   }
-
 
   .lista-fotos {
     list-style: none;
   }
 
   .lista-fotos .lista-fotos-item {
-    display: inline-block;
-    margin: 1%;
-  }
 
+    display: inline-block;
+  }
 
   .filtro {
+
     display: block;
-    width: 100%
-    
+    width: 100%;
   }
-  
-  
 </style>

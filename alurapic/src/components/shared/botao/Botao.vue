@@ -3,48 +3,54 @@
 </template>
 
 <script>
+
 export default {
 
     props: {
+
         tipo: {
-            required: true,
+            required: true, 
             type: String
         },
 
         rotulo: {
-            required:true,
+            required: true, 
             type: String
-        },
-        confirmacao: {
-            type:Boolean
-        },
-        estilo:String,
+        }, 
+
+        confirmacao: Boolean,
+        estilo: String
+
     },
 
     methods: {
 
-       disparaAcao() {
-           if(this.confirmacao){
-               if(confirm('Confirma operacao?')) {
-                   this.$emit('botaoAtivado');
+        disparaAcao() {
+
+            if(this.confirmacao) {
+                if(confirm('Confirma operação?')) {
+                    this.$emit('botaoAtivado');
+                }
+                return;
             }
-            return;
-           }
-            this.$emit('botaoAtivado');    
-       }
-       
-   },
-   computed: {
-       estiloDoBotao() {
-           if(this.estilo =='padrao' || this.estilo =='') return 'botao-padrao';
-           if (this.estilo == 'perigo') return 'botao-perigo';
-       }
-   }
+            this.$emit('botaoAtivado');
+        }
+    },
+
+    computed: {
+
+        estiloDoBotao() {
+
+            if(this.estilo == 'padrao' || !this.estilo) return 'botao-padrao';
+            if(this.estilo == 'perigo') return 'botao-perigo';
+        }
+
+    }
 }
 </script>
 
-<style scoped>
-     .botao {
+<style>
+    .botao {
         display: inline-block;
         padding: 10px;
         border-radius: 3px;
@@ -61,5 +67,4 @@ export default {
         background: darkcyan;
         color: white;
     }
-
 </style>
